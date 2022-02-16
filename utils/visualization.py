@@ -50,7 +50,7 @@ def visualize_scene_flow(scene_flow):
     return scene_flow_vis
 
 
-def visualize_depth(depth, depth_min=None, depth_max=None):
+def visualize_depth(depth, depth_min=None, depth_max=None, cmap=True):
     """Visualize the depth map with colormap.
 
     Rescales the values so that depth_min and depth_max map to 0 and 1,
@@ -66,13 +66,17 @@ def visualize_depth(depth, depth_min=None, depth_max=None):
     depth_scaled = depth_scaled ** 0.5
     depth_scaled_uint8 = np.uint8(depth_scaled * 255)
 
-    return ((cv2.applyColorMap(
-        depth_scaled_uint8, colormaps.cm_magma) / 255) ** 2.2) * 255
+    if cmap:
+        return ((cv2.applyColorMap(
+            depth_scaled_uint8, colormaps.cm_magma) / 255) ** 2.2) * 255
+
+    else:
+        return depth_scaled_uint8
 
 
 def visualize_depth_dir(
     src_dir: str, dst_dir: str, force: bool = False, extension: str = ".raw",
-    min_percentile: float = 0, max_percentile: float = 100,
+    min_percentile: float = 0, max_percentile: float = 100, cmap=True
 ):
     src_files = []
     dst_files = []
@@ -128,7 +132,7 @@ def visualize_depth_dir(
             else:
                 disparity = cv2.imread(f"{src_dir}/{src_file}")
 
-            disparity_vis = visualize_depth(disparity, d_min, d_max)
+            disparity_vis = visualize_depth(disparity, d_min, d_max, cmap)
 
             print(f"writing '{dst_file}'.")
             cv2.imwrite(f"{dst_dir}/{dst_file}", disparity_vis)

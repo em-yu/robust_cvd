@@ -13,7 +13,9 @@ from utils.helpers import mkdir_ifnotexists
 
 
 ffmpeg = "/usr/local/bin/ffmpeg"
+ffmpeg = "~/miniconda3/envs/robustcvd/bin/ffmpeg"
 ffprobe = "/usr/local/bin/ffprobe"
+ffprobe = "~/miniconda3/envs/robustcvd/bin/ffprobe"
 
 
 def sample_pairs(frame_range, flow_ops):

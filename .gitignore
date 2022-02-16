@@ -1,0 +1,12 @@
+
+*.ini
+
+.vscode/
+
+__MACOSX/
+
+__pycache__/
+
+lib/build/
+
+models/

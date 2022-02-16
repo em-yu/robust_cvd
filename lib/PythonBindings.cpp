@@ -190,10 +190,17 @@ PYBIND11_MODULE(lib_python, m) {
         .def("fromWorldToCamera", &DepthPhoto::Extrinsics::fromWorldToCamera);
 
     py::class_<DepthPhoto::Intrinsics>(m, "Intrinsics")
+        .def_readwrite("projection", &DepthPhoto::Intrinsics::projection)
         .def_readwrite("vFov", &DepthPhoto::Intrinsics::vFov)
         .def_readwrite("hFov", &DepthPhoto::Intrinsics::hFov)
         .def_readwrite("centerLat", &DepthPhoto::Intrinsics::centerLat)
         .def_readwrite("centerLon", &DepthPhoto::Intrinsics::centerLon);
+
+    py::enum_<DepthPhoto::Intrinsics::Projection>(m, "Projection")
+        .value("Perspective", DepthPhoto::Intrinsics::Projection::Perspective)
+        .value("Equirectangular", DepthPhoto::Intrinsics::Projection::Equirectangular)
+        .value("Cylindrical", DepthPhoto::Intrinsics::Projection::Cylindrical)
+        .export_values();
 
     py::class_<DepthVideoTrackTable>(m, "DepthVideoTrackTable")
         .def(py::init())
@@ -361,7 +368,9 @@ PYBIND11_MODULE(lib_python, m) {
             py::arg("size") = std::pair<int, int>{-1, -1})
         .def("depthFrame", static_cast<
             const DepthFrame& (DepthVideo::*)(const int, const int) const>(
-                &DepthVideo::depthFrame))
+                &DepthVideo::depthFrame),
+            py::return_value_policy::reference)
+        // .def("depthFrame", &DepthVideo::depthFrame)
         .def("clearDepthCaches", &DepthVideo::clearDepthCaches)
         .def("saveDepth", &DepthVideo::saveDepth);
 
@@ -431,7 +440,6 @@ PYBIND11_MODULE(lib_python, m) {
         .value("ReproDisparity", StaticLossType::ReproDisparity)
         .value("ReproDepthRatio", StaticLossType::ReproDepthRatio)
         .value("ReproLogDepth", StaticLossType::ReproLogDepth);
-
     py::enum_<SmoothLossType>(m, "SmoothLossType")
         .value("EuclideanLaplacian", SmoothLossType::EuclideanLaplacian)
         .value("ReproDisparityLaplacian",

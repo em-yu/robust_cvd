@@ -123,9 +123,14 @@ void DepthVideo::load(const std::string& path) {
 
   LOG(INFO) << "Loading depth video '" << path << "'...";
 
+
+
   path_ = path;
 
   std::string binaryFile = path + "/video.dat";
+
+  std::cout << "Loading video " << binaryFile << '\n';
+
   if (!fs::exists(binaryFile)) {
     throw std::runtime_error("Could not find 'video.dat'.");
   }
@@ -137,6 +142,8 @@ void DepthVideo::load(const std::string& path) {
 
   // Header
   uint32_t magic = read<uint32_t>(is);
+  std::cout << "Magic marker " << magic << '\n';
+
   if (magic != 0xDEADBEEF) {
     throw std::runtime_error(
         "Did not see magic marker at beginning of file.");
@@ -155,6 +162,8 @@ void DepthVideo::load(const std::string& path) {
 
   int numFrames = read<int>(is);
 
+  std::cout << "Nb frames " << numFrames << '\n';
+
   // Read frames.
   metaFrames_.resize(numFrames);
   for (int frame = 0; frame < metaFrames_.size(); ++frame) {
@@ -167,27 +176,47 @@ void DepthVideo::load(const std::string& path) {
 
   // Read color streams.
   int numColorStreams = read<int>(is);
+
+  std::cout << "Nb color streams " << numColorStreams << '\n';
+
   colorStreams_.resize(numColorStreams);
   for (int csi = 0; csi < colorStreams_.size(); ++csi) {
+
+    std::cout << "csi " << csi << '\n';
+
     // Using 'new' to access ColorStream's private constructor.
     colorStreams_[csi] = std::unique_ptr<ColorStream>(new ColorStream(*this));
+    std::cout << "created color stream" << '\n';
     ColorStream& cs = *colorStreams_[csi];
 
     cs.name_ = readstr(is);
+    std::cout << "read name " << cs.name_ << '\n';
     cs.setDir(readstr(is));
+    std::cout << "read dir" << '\n';
     cs.extension_ = readstr(is);
-    if (fileFormat >= 7) {
-      read(is, cs.type_);
-    } else {
-      if (cs.name_ == "dynamic_mask") {
-        cs.type_ = CV_8UC1;
-      } else {
-        cs.type_ = CV_32FC3;
-      }
-    }
+
+    std::cout << cs.name_ << " " << cs.extension_ << '\n';
+
+    // if (fileFormat >= 7) {
+    //   read(is, cs.type_);
+    // } else {
+    //   if (cs.name_ == "dynamic_mask") {
+    //     cs.type_ = CV_8UC1;
+    //   } else {
+    //     cs.type_ = CV_32FC3;
+    //   }
+    // }
+
+    read(is, cs.type_);
+
 
     cs.width_ = read<int>(is);
     cs.height_ = read<int>(is);
+
+    bool boolean_data;
+    read<bool>(is, boolean_data);
+
+    std::cout << "boolean = " << boolean_data << '\n';
 
     // if (fileFormat >= 12) {
     //   bool hasGopTable = read<bool>(is);
@@ -208,6 +237,8 @@ void DepthVideo::load(const std::string& path) {
 
   // Read depth streams.
   int numDepthStreams = read<int>(is);
+  std::cout << "Nb depth streams " << numDepthStreams << '\n';
+  
   depthStreams_.resize(numDepthStreams);
   for (int dsi = 0; dsi < depthStreams_.size(); ++dsi) {
     // Using 'new' to access DepthStream's private constructor.
@@ -217,20 +248,23 @@ void DepthVideo::load(const std::string& path) {
     ds.name_ = readstr(is);
     ds.setDir(readstr(is));
 
-    if (fileFormat < 10) {
-      // Backward-compatible reading code: implicit depth xform type.
-      std::string str = readstr(is);
-      ds.depthXformDesc_.parse(str);
+    // if (fileFormat < 10) {
+    //   // Backward-compatible reading code: implicit depth xform type.
+    //   std::string str = readstr(is);
+    //   ds.depthXformDesc_.parse(str);
 
-      ds.spatialXformDesc_.type = XformType::Spatial;
-      ds.spatialXformDesc_.spatialType = SpatialXformType::Identity;
-    } else {
+    //   ds.spatialXformDesc_.type = XformType::Spatial;
+    //   ds.spatialXformDesc_.spatialType = SpatialXformType::Identity;
+    // } else {
       ds.depthXformDesc_.fread(is);
       ds.spatialXformDesc_.fread(is);
-    }
+    // }
 
     ds.width_ = read<int>(is);
     ds.height_ = read<int>(is);
+
+    bool boolean_data;
+    read<bool>(is, boolean_data);
 
     // if (fileFormat >= 13) {
     //   bool hasGopTable = read<bool>(is);
@@ -292,6 +326,9 @@ void DepthVideo::load(const std::string& path) {
   metaFrames_.back()->duration_ = duration_ - metaFrames_.back()->pts_;
 
   magic = read<uint32_t>(is);
+
+  std::cout << "Magic marker " << magic << '\n';
+
   if (magic != 0xDEADBEEF) {
     throw std::runtime_error("Did not see magic marker at end of file.");
   }
